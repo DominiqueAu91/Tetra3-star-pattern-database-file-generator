@@ -3,7 +3,7 @@
 This repository provides a Python command-line utility (`tetra3_pipeline.py`) to generate
 **custom Tetra3 star-pattern database files** from raw catalogs such as Hipparcos, Tycho, or BSC5.  
 
-My personal purpose in writing this tool was to generate **custom star databases for the PiFinder** project,
+My personal purpose in writing this tool was to generate **custom star databases for the official** [PiFinder project](https://www.pifinder.io/),
 where I needed different database files to match **different camera lenses** (for example, 12.5 mm and 16 mm lenses
 on the Raspberry Pi HQ Camera).
 
