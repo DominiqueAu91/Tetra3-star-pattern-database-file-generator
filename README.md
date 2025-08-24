@@ -89,24 +89,127 @@ python3 ./tetra3_pipeline.py solve "./examples" --database ./db_12p5mm_from_hip.
 The results will be logged in `results.csv`.
 
 ---
+## Plate Solving Detectability Calculations
 
+To compare the effectiveness of different lenses and sensors for PiFinder, we estimated the limiting magnitude
+and the number of stars available for plate solving under a **good rural sky (Bortle 4)** with **0.5 s exposures**.
+
+### Methodology
+
+- **Star flux scaling**  
+  Star signal ∝ Aperture_Area × QE × Exposure_Time
+
+- **Sky background per pixel**  
+  Sky background ∝ QE × Exposure_Time × (Pixel_Size² / f#²)
+
+- **Signal-to-noise ratio (SNR)**  
+  SNR ∝ Signal / sqrt(Background)
+
+- **Magnitude difference**  
+  Δm = 2.5 × log10(SNR_ratio)
+
+- **Star counts**  
+  Estimated from cumulative Hipparcos/Tycho catalogs, scaled to the field-of-view (FOV).
+
+---
+
+### Input Parameters
+
+| Setup | Sensor | Pixel size | QE (green) | Lens | f/# | Aperture D | Area A |
+|-------|--------|------------|------------|------|-----|------------|--------|
+| A | IMX477 (HQ Cam) | 1.55 µm | ~0.75 | 12.5 mm | 1.3 | 9.6 mm | 72.6 mm² |
+| B | IMX296 (mono) | 3.45 µm | ~0.64 | 16 mm | 2.0 | 8.0 mm | 50.3 mm² |
+
+---
+
+### Step 1 — Relative star signal
+
+Signal ratio (A/B) = (72.6 × 0.75) / (50.3 × 0.64) ≈ **1.69**
+
+→ IMX477 setup records ~1.7× more star photons.
+
+---
+
+### Step 2 — Relative sky background
+
+Background ratio (A/B) = (0.75 × (1.55² / 1.3²)) / (0.64 × (3.45² / 2.0²)) ≈ **0.56**
+
+→ IMX477 setup has ~44% less sky noise per pixel.
+
+---
+
+### Step 3 — Relative SNR
+
+SNR ratio = 1.69 / sqrt(0.56) ≈ **2.26**
+
+→ IMX477 setup has ~2.3× higher SNR for faint stars.
+
+---
+
+### Step 4 — Magnitude depth
+
+Δm = 2.5 × log10(2.26) ≈ **0.89 mag**
+
+→ IMX477 reaches ~0.9 mag deeper than IMX296 at 0.5 s.
+
+---
+
+### Step 5 — Field-of-view star counts
+
+- **IMX477 + 12.5 mm f/1.3**  
+  - FOV ≈ 28.5° × 21.4° (≈610 deg²)  
+  - Limiting magnitude ≈ 9.2  
+  - Star density ≈ 4.4 stars/deg²  
+  - → ~2,700 stars per frame (range 1,300–5,300 depending on sky region)
+
+- **IMX296 + 16 mm f/2**  
+  - FOV ≈ 18.0° × 13.4° (≈241 deg²)  
+  - Limiting magnitude ≈ 8.4  
+  - Star density ≈ 2.1 stars/deg²  
+  - → ~500 stars per frame (range 250–1,000 depending on sky region)
+
+---
+
+### Interpretation
+
+- **IMX477 + 12.5 mm f/1.3**  
+  - Deeper by ~0.9 mag  
+  - Larger field (≈2.5× area of IMX296 setup)  
+  - Thousands of stars per frame  
+  - → Very robust plate solving everywhere in the sky
+
+- **IMX296 + 16 mm f/2**  
+  - Shallower limit (~mag 8.4)  
+  - Narrower field (~241 deg²)  
+  - A few hundred stars per frame  
+  - → Usually sufficient, but less reliable in sparse regions (e.g. near galactic poles)
+
+---
+
+### Conclusion
+
+For plate solving with 0.5 s exposures under rural skies:
+- **IMX477 + 12.5 mm f/1.3** offers superior robustness, with ~2,700 stars per frame and deeper limiting magnitude.  
+- **IMX296 + 16 mm f/2** is usable but closer to the edge, with ~500 stars per frame. Increasing exposure to 1–2 s improves reliability across the whole sky.
+
+---
 ## PiFinder Examples
 
 For Raspberry Pi HQ cam with:
 
 - **12.5 mm lens**  
-  FOV ≈ 30–36°, mag limit ≈ 8  
+  FOV ≈ 30–36°, mag limit ≈ 9  
   ```bash
   python tetra3_pipeline.py generate-db --star-catalog hip_main --catalog-dir "./catalogs" \
-    --min-fov 30 --max-fov 36 --star-max-magnitude 8 \
+    --min-fov 30 --max-fov 36 --star-max-magnitude 9 \
     -o db_pifinder_12p5mm.npz
   ```
 
 - **16 mm lens**  
-  FOV ≈ 24–28°, mag limit ≈ 8  
+  FOV ≈ 10–20°, mag limit ≈ 8  
   ```bash
   python tetra3_pipeline.py generate-db --star-catalog hip_main --catalog-dir "./catalogs" \
-    --min-fov 24 --max-fov 28 --star-max-magnitude 8 \
+    --min-fov 10 --max-fov 20 --star-max-magnitude 8 \
     -o db_pifinder_16mm.npz
   ```
 
