@@ -66,8 +66,68 @@ python3 ./tetra3_pipeline.py generate-db --star-catalog hip_main --catalog-dir "
 - `--star-max-magnitude`: depth of catalog; higher = deeper but slower DB.  
 - `-o`: output `.npz` file.  
 
+
+In each case, generate your `.npz` with `max_fov` set close to that HFOV and `min_fov=value` with value  > max_fov/1.5. In my case, PiHQ Camera and 12.5mm lens I choose max_fov = 30° and min_fov = 25°.
+
+---
+#### Choosing a suitable magnitude limit
+
+A good rule of thumb:  
+- **Set the database star magnitude limit ~0.5–1 mag fainter than your camera can reliably detect in your typical exposure**.  
+- This ensures the DB has all stars you will see, but not millions of faint stars that only bloat the file and slow solving.
+
+Typical values (for 0.5 s exposure, rural Bortle 3–4 sky):  
+- **IMX477 + 12.5 mm f/1.3** → stars to ~mag 9.0 → use `star_max_magnitude ≈ 9`  
+- **IMX296 + 16 mm f/2** → stars to ~mag 8.0–8.5 → use `star_max_magnitude ≈ 8`
+
+---
+### Generate a database (PiFinder context)
+
+PiFinder uses **Cedar Detect**, a fork of Tetra3, for star pattern recognition.  
+Cedar’s guidelines are to set the database `max_fov` to match the **horizontal field of view (HFOV) of your sensor/lens combination** (not the diagonal).  
+This ensures the generated star patterns scale properly and keeps the database size efficient.
+
+> Example:  
+> - Pi HQ Camera (IMX477) + 12.5 mm lens → HFOV ≈ 28.5°  
+> - IMX296 + 16 mm lens → HFOV ≈ 17–18°  
+
+
 ---
 
+#### Which database does PiFinder actually use?
+
+Although you may find multiple `.npz` files under `/home/pifinder/PiFinder/astro_data/`,  
+
+PiFinder loads the following file at runtime:
+
+`/home/pifinder/PiFinder/python/PiFinder/tetra3/tetra3/data/default_database.npz`
+
+If you want PiFinder to use your own custom database, you must replace this file with your own `.npz`.
+
+---
+
+#### How to replace the database on PiFinder
+
+1. **Copy your custom locally generated `.npz` to the PiFinder**, e.g. into `/home/pifinder/astro_data/` using Windows shell:
+   ```bash
+   scp my_custom_db.npz pifinder@pifinder.local:/home/pifinder/astro_data/
+
+2. **SSH into the PiFinder:**
+   `ssh pifinder@pifinder.local     # password: solveit`
+
+3. **Backup the original database:**
+   
+ ` cd /home/pifinder/PiFinder/python/PiFinder/tetra3/tetra3/data
+mv default_database.npz default_database.bak.npz`
+
+4. **Replace it with your custom one:**
+   `cp /home/pifinder/astro_data/my_custom_db.npz /home/pifinder/PiFinder/python/PiFinder/tetra3/tetra3/data/default_database.npz`
+
+5. **Restart PiFinder service**
+   
+  ` sudo systemctl restart pifinder`
+
+---
 ### Solve images
 
 **Windows:**
